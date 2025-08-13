@@ -1,6 +1,8 @@
 package utils
 
 import (
+	"bytes"
+	"encoding/json"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -33,4 +35,15 @@ func FindProjectRoot(start string) (string, error) {
 		abs = parent
 	}
 	return "", fmt.Errorf("no .fuse.yaml found")
+}
+
+func PrettyPrint(data any) error {
+	var buffer bytes.Buffer
+	enc := json.NewEncoder(&buffer)
+	enc.SetIndent("", "    ")
+	if err := enc.Encode(data); err != nil {
+		return err
+	}
+	fmt.Println(buffer.String())
+	return nil
 }
