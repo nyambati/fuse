@@ -1,0 +1,9 @@
+# Fuse project configuration
+secrets: env # Secret provider: env, sops, vault, ssm
+build:
+  output: dist/alertmanager.yaml
+
+# Optional defaults for CLI flags
+defaults:
+  verbose: false
+  quiet: false

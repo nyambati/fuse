@@ -1,0 +1,11 @@
+flows:
+  - notify: payments-slack
+    when:
+      severity: critical
+      team: payments
+    group_by: [alertname, cluster]
+    wait_for: 30s
+    group_interval: 5m
+    repeat_after: 1h
+    silence_when:
+      - night-shift

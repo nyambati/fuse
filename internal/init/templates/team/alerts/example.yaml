@@ -1,0 +1,12 @@
+groups:
+  - name: example
+    rules:
+      - alert: HighCPUUsage
+        expr: node_cpu_seconds_total{mode="user"} > 80
+        for: 2m
+        labels:
+          severity: critical
+          team: example
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% for more than 2 minutes."

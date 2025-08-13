@@ -1,0 +1,9 @@
+inhibitors:
+  - name: suppress-warnings-when-critical
+    if:
+      severity: critical
+    when:
+      - alertname
+      - cluster
+    suppress:
+      severity: warning

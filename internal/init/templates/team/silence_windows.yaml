@@ -1,0 +1,9 @@
+silence_windows:
+  - name: silence_window1
+    time: 09:00-17:00
+    enabled: true
+    weekdays: [Monday:Friday]
+    days_of_month: []
+    months: []
+    years: []
+    timezone: "Australia/Sydney"
