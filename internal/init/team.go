@@ -4,13 +4,15 @@ import (
 	"embed"
 	"fmt"
 	"path/filepath"
+
+	"github.com/nyambati/fuse/internal/utils"
 )
 
 //go:embed templates/team/*
 var teamTemplates embed.FS
 
 func InitTeam(options InitOptions) error {
-	root, err := findFuseProjectRoot(options.Path)
+	root, err := utils.FindProjectRoot(options.Path)
 	if err != nil {
 		return fmt.Errorf("cannot create team: %w", err)
 	}
@@ -39,7 +41,7 @@ func InitTeam(options InitOptions) error {
 				continue
 			}
 		}
-		if err := WriteTemplateFile(teamTemplates, file, target, options.Force, options.Quiet); err != nil {
+		if err := writeTemplateFile(teamTemplates, file, target, options.Force, options.Quiet); err != nil {
 			return err
 		}
 	}

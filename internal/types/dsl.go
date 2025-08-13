@@ -33,16 +33,9 @@ type SilenceWindow struct {
 
 // Channel represents a notification destination.
 type Channel struct {
-	Name   string            `yaml:"name"`
-	Type   string            `yaml:"type"`
-	Params map[string]string `yaml:"params,omitempty"` // generic bag; specific keys (e.g., webhook_url) can also be top-level later
-	// Common well-known fields kept for convenience (optional at this stage)
-	WebhookURL  string `yaml:"webhook_url,omitempty"`
-	RoutingKey  string `yaml:"routing_key,omitempty"`
-	URL         string `yaml:"url,omitempty"`
-	ServiceKey  string `yaml:"service_key,omitempty"`
-	Email       string `yaml:"email,omitempty"`
-	PhoneNumber string `yaml:"phone_number,omitempty"`
+	Name   string         `yaml:"name"`
+	Type   string         `yaml:"type"`
+	Params map[string]any `yaml:"params,omitempty"`
 }
 
 // Flow is a single routing rule inside flows.yaml.
@@ -53,7 +46,7 @@ type Flow struct {
 	WaitFor       string            `yaml:"wait_for,omitempty"`
 	GroupInterval string            `yaml:"group_interval,omitempty"`
 	RepeatAfter   string            `yaml:"repeat_after,omitempty"`
-	MuteWhen      []string          `yaml:"mute_when,omitempty"`
+	SilenceWhen   []string          `yaml:"silence_when,omitempty"`
 	Continue      *bool             `yaml:"continue,omitempty"`
 }
 

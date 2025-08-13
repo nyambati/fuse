@@ -8,9 +8,9 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/nyambati/fuse/internal/am"
-	"github.com/nyambati/fuse/internal/dsl"
 	"github.com/nyambati/fuse/internal/parse"
 	"github.com/nyambati/fuse/internal/secrets"
+	"github.com/nyambati/fuse/internal/utils"
 	"github.com/nyambati/fuse/internal/validate"
 )
 
@@ -30,13 +30,13 @@ func newValidateCmd() *cobra.Command {
 		Short: "Validate Fuse DSL and generated Alertmanager config",
 		RunE: func(cmd *cobra.Command, args []string) error {
 			// 1) Discover project root
-			root, err := dsl.FindProjectRoot(path)
+			root, err := utils.FindProjectRoot(path)
 			if err != nil {
 				return fmt.Errorf("not a Fuse project (no .fuse.yaml): %w", err)
 			}
 
 			// 2) Load DSL (global + teams)
-			proj, loadDiags := dsl.LoadProject(root, teams)
+			proj, loadDiags := parse.LoadProject(root, teams)
 			if len(loadDiags) > 0 {
 				// continue; we’ll include loader diagnostics
 			}

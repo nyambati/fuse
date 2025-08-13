@@ -13,7 +13,7 @@ func ensureDir(path string) error {
 	return os.MkdirAll(path, 0755)
 }
 
-func WriteTemplateFile(efs embed.FS, templatePath, targetPath string, force, quiet bool) error {
+func writeTemplateFile(efs embed.FS, templatePath, targetPath string, force, quiet bool) error {
 	templatePath = filepath.Join("templates", templatePath)
 	// Skip existing unless force
 	if _, err := os.Stat(targetPath); err == nil && !force {
@@ -52,19 +52,4 @@ func trimTemplatePrefix(path string) string {
 		return parts[1]
 	}
 	return path
-}
-
-func findFuseProjectRoot(start string) (string, error) {
-	dir := start
-	for {
-		if _, err := os.Stat(filepath.Join(dir, ".fuse.yaml")); err == nil {
-			return dir, nil
-		}
-		parent := filepath.Dir(dir)
-		if parent == dir {
-			break
-		}
-		dir = parent
-	}
-	return "", fmt.Errorf("no .fuse.yaml found")
 }

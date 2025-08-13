@@ -71,7 +71,7 @@ func mapFlowToRoutes(team types.Team, idx int, f types.Flow) ([]am.Route, []type
 			GroupInterval:     f.GroupInterval,
 			RepeatInterval:    f.RepeatAfter,
 			Matchers:          matchers,
-			MuteTimeIntervals: append([]string{}, f.MuteWhen...),
+			MuteTimeIntervals: append([]string{}, f.SilenceWhen...),
 		}
 		if f.Continue != nil {
 			r.Continue = *f.Continue

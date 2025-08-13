@@ -11,9 +11,8 @@ type Config struct {
 type Receiver struct {
 	Name            string           `yaml:"name"`
 	SlackConfigs    []map[string]any `yaml:"slack_configs,omitempty"`
-	PagerdutyConfig []map[string]any `yaml:"pagerduty_configs,omitempty"`
 	WebhookConfigs  []map[string]any `yaml:"webhook_configs,omitempty"`
-	EmailConfigs    []map[string]any `yaml:"email_configs,omitempty"`
+	OpsgenieConfigs []map[string]any `yaml:"opsgenie_configs,omitempty"`
 }
 
 type Route struct {
