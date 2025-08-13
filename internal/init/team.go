@@ -15,6 +15,10 @@ func InitTeam(options InitOptions) error {
 		return fmt.Errorf("cannot create team: %w", err)
 	}
 
+	if options.Team == "" {
+		return fmt.Errorf("team name is required")
+	}
+
 	teamDir := filepath.Join(root, "teams", options.Team)
 	if err := ensureDir(teamDir); err != nil {
 		return err
@@ -35,7 +39,7 @@ func InitTeam(options InitOptions) error {
 				continue
 			}
 		}
-		if err := writeTemplateFile(teamTemplates, file, target, options.Force, options.Quiet); err != nil {
+		if err := WriteTemplateFile(teamTemplates, file, target, options.Force, options.Quiet); err != nil {
 			return err
 		}
 	}

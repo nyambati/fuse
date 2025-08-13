@@ -36,7 +36,7 @@ func InitProject(options InitOptions) error {
 			continue
 		}
 
-		if err := writeTemplateFile(projectTemplates, file, target, options.Force, options.Quiet); err != nil {
+		if err := WriteTemplateFile(projectTemplates, file, target, options.Force, options.Quiet); err != nil {
 			return err
 		}
 	}

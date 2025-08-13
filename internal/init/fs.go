@@ -13,7 +13,7 @@ func ensureDir(path string) error {
 	return os.MkdirAll(path, 0755)
 }
 
-func writeTemplateFile(efs embed.FS, templatePath, targetPath string, force, quiet bool) error {
+func WriteTemplateFile(efs embed.FS, templatePath, targetPath string, force, quiet bool) error {
 	templatePath = filepath.Join("templates", templatePath)
 	// Skip existing unless force
 	if _, err := os.Stat(targetPath); err == nil && !force {
