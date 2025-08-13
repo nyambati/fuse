@@ -2,6 +2,7 @@ package parse
 
 import (
 	"github.com/nyambati/fuse/internal/am"
+	"github.com/nyambati/fuse/internal/diag"
 	"github.com/nyambati/fuse/internal/secrets"
 	"github.com/nyambati/fuse/internal/types"
 )
@@ -13,10 +14,10 @@ import (
 //  2. Build Routes from flows (attached under root route)
 //  3. Build TimeIntervals from silence_windows
 //  4. Inhibit rules are passed through as-is from DSL (v0.1 simple copy)
-func ToAlertmanager(proj types.Project, prov secrets.Provider) (am.Config, []types.Diagnostic) {
+func ToAlertmanager(proj types.Project, prov secrets.Provider) (am.Config, []diag.Diagnostic) {
 	var (
 		cfg   am.Config
-		diags []types.Diagnostic
+		diags []diag.Diagnostic
 	)
 
 	// Receivers

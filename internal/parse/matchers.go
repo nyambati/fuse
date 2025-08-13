@@ -5,7 +5,7 @@ import (
 	"regexp"
 	"strings"
 
-	"github.com/nyambati/fuse/internal/types"
+	"github.com/nyambati/fuse/internal/diag"
 )
 
 // ToMatchers converts a Fuse `when:` map into Alertmanager matcher strings.
@@ -14,19 +14,19 @@ import (
 // - value with "!" prefix       -> not equals (key!="value")
 // - value with "~" prefix       -> regex      (key=~"pattern")
 // - value with "!~" prefix      -> regex-not  (key!~"pattern")
-func ToMatchers(when map[string]string) ([]string, []types.Diagnostic) {
+func ToMatchers(when map[string]string) ([]string, []diag.Diagnostic) {
 	if len(when) == 0 {
 		return nil, nil
 	}
 	var (
 		out   = make([]string, 0, len(when))
-		diags []types.Diagnostic
+		diags []diag.Diagnostic
 	)
 	for k, raw := range when {
 		key := strings.TrimSpace(k)
 		if key == "" {
-			diags = append(diags, types.Diagnostic{
-				Level:   types.LevelError,
+			diags = append(diags, diag.Diagnostic{
+				Level:   diag.LevelError,
 				Code:    "MATCH_EMPTY_KEY",
 				Message: "matcher key is empty",
 			})
@@ -45,11 +45,11 @@ func ToMatchers(when map[string]string) ([]string, []types.Diagnostic) {
 }
 
 // parseOneMatcher applies Option‑D prefix rules to a single key/value.
-func parseOneMatcher(key, val string) (string, []types.Diagnostic) {
+func parseOneMatcher(key, val string) (string, []diag.Diagnostic) {
 	val = strings.TrimSpace(val)
 	if val == "" {
-		return "", []types.Diagnostic{{
-			Level:   types.LevelError,
+		return "", []diag.Diagnostic{{
+			Level:   diag.LevelError,
 			Code:    "MATCH_EMPTY_VALUE",
 			Message: fmt.Sprintf("matcher %q has empty value", key),
 		}}
@@ -59,8 +59,8 @@ func parseOneMatcher(key, val string) (string, []types.Diagnostic) {
 	case strings.HasPrefix(val, "!~"):
 		pat := strings.TrimSpace(strings.TrimPrefix(val, "!~"))
 		if err := validateRegex(pat); err != nil {
-			return "", []types.Diagnostic{{
-				Level:   types.LevelError,
+			return "", []diag.Diagnostic{{
+				Level:   diag.LevelError,
 				Code:    "MATCH_REGEX_INVALID",
 				Message: fmt.Sprintf("invalid regex for %q: %v", key, err),
 			}}
@@ -70,8 +70,8 @@ func parseOneMatcher(key, val string) (string, []types.Diagnostic) {
 	case strings.HasPrefix(val, "~"):
 		pat := strings.TrimSpace(strings.TrimPrefix(val, "~"))
 		if err := validateRegex(pat); err != nil {
-			return "", []types.Diagnostic{{
-				Level:   types.LevelError,
+			return "", []diag.Diagnostic{{
+				Level:   diag.LevelError,
 				Code:    "MATCH_REGEX_INVALID",
 				Message: fmt.Sprintf("invalid regex for %q: %v", key, err),
 			}}
@@ -81,8 +81,8 @@ func parseOneMatcher(key, val string) (string, []types.Diagnostic) {
 	case strings.HasPrefix(val, "!"):
 		v := strings.TrimSpace(strings.TrimPrefix(val, "!"))
 		if v == "" {
-			return "", []types.Diagnostic{{
-				Level:   types.LevelError,
+			return "", []diag.Diagnostic{{
+				Level:   diag.LevelError,
 				Code:    "MATCH_NOT_EMPTY",
 				Message: fmt.Sprintf("matcher %q uses '!' but has no value", key),
 			}}

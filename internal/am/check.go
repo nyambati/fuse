@@ -1,13 +1,13 @@
 package am
 
-import "github.com/nyambati/fuse/internal/types"
+import "github.com/nyambati/fuse/internal/diag"
 
 // "bytes"
 // "os/exec"
 
 // CheckWithAmtool optionally validates the rendered Alertmanager config with amtool.
 // MVP: if amtoolPath == "", return no diagnostics. We'll implement this later.
-func CheckWithAmtool(_ Config, amtoolPath string) []types.Diagnostic {
+func CheckWithAmtool(_ Config, amtoolPath string) []diag.Diagnostic {
 	if amtoolPath == "" {
 		return nil
 	}

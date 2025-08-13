@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"sort"
 
+	"github.com/nyambati/fuse/internal/diag"
 	"github.com/nyambati/fuse/internal/types"
 )
 
@@ -14,15 +15,15 @@ type Options struct {
 
 // Project runs semantic validation on a loaded DSL project and the derived AM config.
 // amc is intentionally typed as any to avoid import cycles; richer checks can be added later.
-func Project(proj types.Project, amc any, opts Options) []types.Diagnostic {
-	var diags []types.Diagnostic
+func Project(proj types.Project, amc any, opts Options) []diag.Diagnostic {
+	var diags []diag.Diagnostic
 
 	// ---- Basic project-level checks (skeleton) ----
 
 	// Ensure project root is set.
 	if proj.Root == "" {
-		diags = append(diags, types.Diagnostic{
-			Level:   types.LevelError,
+		diags = append(diags, diag.Diagnostic{
+			Level:   diag.LevelError,
 			Code:    "PROJ_ROOT_EMPTY",
 			Message: "project root not set",
 		})
@@ -32,8 +33,8 @@ func Project(proj types.Project, amc any, opts Options) []types.Diagnostic {
 	seen := map[string]struct{}{}
 	for _, t := range proj.Teams {
 		if t.Name == "" {
-			diags = append(diags, types.Diagnostic{
-				Level:   types.LevelWarn,
+			diags = append(diags, diag.Diagnostic{
+				Level:   diag.LevelWarn,
 				Code:    "TEAM_NAME_EMPTY",
 				Message: "a team folder has an empty name",
 				File:    t.Path,
@@ -41,8 +42,8 @@ func Project(proj types.Project, amc any, opts Options) []types.Diagnostic {
 			continue
 		}
 		if _, ok := seen[t.Name]; ok {
-			diags = append(diags, types.Diagnostic{
-				Level:   types.LevelError,
+			diags = append(diags, diag.Diagnostic{
+				Level:   diag.LevelError,
 				Code:    "TEAM_NAME_DUP",
 				Message: fmt.Sprintf("duplicate team name %q", t.Name),
 				File:    t.Path,
@@ -62,8 +63,8 @@ func Project(proj types.Project, amc any, opts Options) []types.Diagnostic {
 }
 
 // Merge combines multiple diagnostic slices and sorts them
-func Merge(diags ...[]types.Diagnostic) []types.Diagnostic {
-	var all []types.Diagnostic
+func Merge(diags ...[]diag.Diagnostic) []diag.Diagnostic {
+	var all []diag.Diagnostic
 	for _, d := range diags {
 		if len(d) > 0 {
 			all = append(all, d...)
@@ -88,13 +89,13 @@ func Merge(diags ...[]types.Diagnostic) []types.Diagnostic {
 // 0 = no issues
 // 2 = warnings only (strict=false)
 // 3 = errors found
-func ExitCode(diags []types.Diagnostic, strict bool) int {
+func ExitCode(diags []diag.Diagnostic, strict bool) int {
 	var hasWarn, hasErr bool
 	for _, d := range diags {
 		switch d.Level {
-		case types.LevelWarn:
+		case diag.LevelWarn:
 			hasWarn = true
-		case types.LevelError:
+		case diag.LevelError:
 			hasErr = true
 		}
 	}

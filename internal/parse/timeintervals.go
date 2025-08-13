@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"github.com/nyambati/fuse/internal/am"
+	"github.com/nyambati/fuse/internal/diag"
 	"github.com/nyambati/fuse/internal/types"
 )
 
@@ -13,10 +14,10 @@ var timeRangeRe = regexp.MustCompile(`^\s*([0-2]?\d:[0-5]\d)\s*-\s*([0-2]?\d:[0-
 
 // BuildTimeIntervals maps global + team silence_windows into AM time_intervals.
 // Team-level windows can shadow global ones with the same name (warn).
-func BuildTimeIntervals(proj types.Project) ([]am.TimeIntervalSet, []types.Diagnostic) {
+func BuildTimeIntervals(proj types.Project) ([]am.TimeIntervalSet, []diag.Diagnostic) {
 	var (
 		sets  []am.TimeIntervalSet
-		diags []types.Diagnostic
+		diags []diag.Diagnostic
 	)
 
 	seen := map[string]string{} // name -> scope ("global" or "team/<name>")
@@ -24,8 +25,8 @@ func BuildTimeIntervals(proj types.Project) ([]am.TimeIntervalSet, []types.Diagn
 	add := func(scope string, sw types.SilenceWindow) {
 		name := strings.TrimSpace(sw.Name)
 		if name == "" {
-			diags = append(diags, types.Diagnostic{
-				Level:   types.LevelError,
+			diags = append(diags, diag.Diagnostic{
+				Level:   diag.LevelError,
 				Code:    "SW_NAME_EMPTY",
 				Message: fmt.Sprintf("%s silence window has empty name", scope),
 			})
@@ -33,8 +34,8 @@ func BuildTimeIntervals(proj types.Project) ([]am.TimeIntervalSet, []types.Diagn
 		}
 
 		if !sw.Enabled {
-			diags = append(diags, types.Diagnostic{
-				Level:   types.LevelInfo,
+			diags = append(diags, diag.Diagnostic{
+				Level:   diag.LevelInfo,
 				Code:    "SW_DISABLED",
 				Message: fmt.Sprintf("silence window %q is disabled; skipping", name),
 			})
@@ -42,8 +43,8 @@ func BuildTimeIntervals(proj types.Project) ([]am.TimeIntervalSet, []types.Diagn
 		}
 
 		if prev, ok := seen[name]; ok && prev != scope {
-			diags = append(diags, types.Diagnostic{
-				Level:   types.LevelWarn,
+			diags = append(diags, diag.Diagnostic{
+				Level:   diag.LevelWarn,
 				Code:    "SW_SHADOW",
 				Message: fmt.Sprintf("silence window %q from %s shadows %s", name, scope, prev),
 			})
@@ -62,8 +63,8 @@ func BuildTimeIntervals(proj types.Project) ([]am.TimeIntervalSet, []types.Diagn
 		if strings.TrimSpace(sw.Time) != "" {
 			m := timeRangeRe.FindStringSubmatch(sw.Time)
 			if len(m) != 3 {
-				diags = append(diags, types.Diagnostic{
-					Level:   types.LevelError,
+				diags = append(diags, diag.Diagnostic{
+					Level:   diag.LevelError,
 					Code:    "SW_TIME_FORMAT",
 					Message: fmt.Sprintf("silence window %q has invalid time range %q (expected HH:MM-HH:MM)", name, sw.Time),
 				})
@@ -84,8 +85,8 @@ func BuildTimeIntervals(proj types.Project) ([]am.TimeIntervalSet, []types.Diagn
 			len(ti.Months) == 0 &&
 			len(ti.Years) == 0 &&
 			len(ti.Times) == 0 {
-			diags = append(diags, types.Diagnostic{
-				Level:   types.LevelWarn,
+			diags = append(diags, diag.Diagnostic{
+				Level:   diag.LevelWarn,
 				Code:    "SW_EMPTY_INTERVAL",
 				Message: fmt.Sprintf("silence window %q has no constraints (weekdays/days/months/years/time); it would match everything", name),
 			})

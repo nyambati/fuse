@@ -4,6 +4,7 @@ import (
 	"fmt"
 
 	"github.com/nyambati/fuse/internal/am"
+	"github.com/nyambati/fuse/internal/diag"
 	"github.com/nyambati/fuse/internal/types"
 )
 
@@ -11,10 +12,10 @@ import (
 // Caller typically wraps these under a single root route:
 //
 //	root := &am.Route{Routes: routes}
-func BuildFlowRoutes(proj types.Project) ([]am.Route, []types.Diagnostic) {
+func BuildFlowRoutes(proj types.Project) ([]am.Route, []diag.Diagnostic) {
 	var (
 		out   []am.Route
-		diags []types.Diagnostic
+		diags []diag.Diagnostic
 	)
 
 	for _, team := range proj.Teams {
@@ -29,16 +30,16 @@ func BuildFlowRoutes(proj types.Project) ([]am.Route, []types.Diagnostic) {
 	return out, diags
 }
 
-func mapFlowToRoutes(team types.Team, idx int, f types.Flow) ([]am.Route, []types.Diagnostic) {
+func mapFlowToRoutes(team types.Team, idx int, f types.Flow) ([]am.Route, []diag.Diagnostic) {
 	var (
 		routes []am.Route
-		diags  []types.Diagnostic
+		diags  []diag.Diagnostic
 	)
 
 	// ---- notify must exist ----
 	if len(f.Notify) == 0 {
-		diags = append(diags, types.Diagnostic{
-			Level:   types.LevelError,
+		diags = append(diags, diag.Diagnostic{
+			Level:   diag.LevelError,
 			Code:    "FLOW_NOTIFY_EMPTY",
 			Message: fmt.Sprintf("flows[%d] has no notify target(s)", idx),
 			File:    team.Path, // we don't have exact file/line yet
@@ -55,8 +56,8 @@ func mapFlowToRoutes(team types.Team, idx int, f types.Flow) ([]am.Route, []type
 	// ---- expand multi-notify into sibling routes ----
 	for _, dest := range f.Notify {
 		if dest == "" {
-			diags = append(diags, types.Diagnostic{
-				Level:   types.LevelError,
+			diags = append(diags, diag.Diagnostic{
+				Level:   diag.LevelError,
 				Code:    "FLOW_NOTIFY_EMPTY_ITEM",
 				Message: fmt.Sprintf("flows[%d] has an empty notify entry", idx),
 				File:    team.Path,
