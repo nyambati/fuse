@@ -40,7 +40,7 @@ type Channel struct {
 
 // Flow is a single routing rule inside flows.yaml.
 type Flow struct {
-	Notify        []string          // normalized: always a slice (string in YAML expands to 1 item)
+	Notify        string            // normalized: always a slice (string in YAML expands to 1 item)
 	When          map[string]string `yaml:"when"`
 	GroupBy       []string          `yaml:"group_by,omitempty"`
 	WaitFor       string            `yaml:"wait_for,omitempty"`

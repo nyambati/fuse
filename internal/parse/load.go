@@ -28,6 +28,8 @@ func LoadProject(root string, teamFilter []string) (types.Project, []diag.Diagno
 		// Global/SilenceWindows will be populated by a loader later.
 	}
 
+	loadGlobal(root, &p, &diags)
+
 	// Discover teams directory
 	teamsDir := filepath.Join(root, "teams")
 	info, err := os.Stat(teamsDir)
@@ -78,12 +80,15 @@ func LoadProject(root string, teamFilter []string) (types.Project, []diag.Diagno
 				continue
 			}
 		}
+
 		teamPath := filepath.Join(teamsDir, name)
-		p.Teams = append(p.Teams, types.Team{
+		team := types.Team{
 			Name: name,
 			Path: teamPath,
-			// Channels/Flows/SilenceWindows will be populated by YAML loaders later.
-		})
+		}
+
+		loadTeam(teamPath, &team, &diags)
+		p.Teams = append(p.Teams, team)
 	}
 
 	// Sort teams for stable output
@@ -115,7 +120,7 @@ func loadGlobal(root string, p *types.Project, diags *[]diag.Diagnostic) {
 		if err := yaml.Unmarshal(b, &raw); err != nil {
 			*diags = append(*diags, diag.Error("YAML_GLOBAL_PARSE",
 				fmt.Sprintf("failed to parse global/global.yaml: %v", err),
-				filepath.Join(root, "global", "global.yaml"), 0))
+				filepath.Join(root, "global", "global.yaml")))
 		} else {
 			if g, ok := raw["global"]; ok {
 				if m, ok2 := g.(map[string]any); ok2 {
@@ -137,7 +142,7 @@ func loadGlobal(root string, p *types.Project, diags *[]diag.Diagnostic) {
 		if err := yaml.Unmarshal(b, &wrapped); err != nil {
 			*diags = append(*diags, diag.Error("YAML_GLOBAL_SILENCE_PARSE",
 				fmt.Sprintf("failed to parse global/silence_windows.yaml: %v", err),
-				filepath.Join(root, "global", "silence_windows.yaml"), 0))
+				filepath.Join(root, "global", "silence_windows.yaml")))
 		} else {
 			p.SilenceWindows = append(p.SilenceWindows, wrapped.SilenceWindows...)
 		}
@@ -151,7 +156,7 @@ func loadGlobal(root string, p *types.Project, diags *[]diag.Diagnostic) {
 		if err := yaml.Unmarshal(b, &wrapped); err != nil {
 			*diags = append(*diags, diag.Error("YAML_GLOBAL_INHIBITORS_PARSE",
 				fmt.Sprintf("failed to parse global/inhibitors.yaml: %v", err),
-				filepath.Join(root, "global", "inhibitors.yaml"), 0))
+				filepath.Join(root, "global", "inhibitors.yaml")))
 		} else {
 			// Project-level inhibitors? If you want global + team inhibitors combined later,
 			// you can add a field to Project. For now we’ll keep them in Global.Raw as passthrough.
@@ -162,6 +167,70 @@ func loadGlobal(root string, p *types.Project, diags *[]diag.Diagnostic) {
 				p.Global.Raw = map[string]any{}
 			}
 			p.Global.Raw["_fuse_global_inhibitors"] = wrapped.Inhibitors
+		}
+	}
+}
+
+func loadTeam(teamPath string, t *types.Team, diags *[]diag.Diagnostic) {
+	// channels.yaml
+	if b, err := os.ReadFile(filepath.Join(teamPath, "channels.yaml")); err == nil {
+		var wrapped struct {
+			Channels []types.Channel `yaml:"channels"`
+		}
+		if err := yaml.Unmarshal(b, &wrapped); err != nil {
+			*diags = append(*diags, diag.Error("YAML_CHANNELS_PARSE",
+				fmt.Sprintf("failed to parse %s: %v", filepath.Join(teamPath, "channels.yaml"), err),
+				filepath.Join(teamPath, "channels.yaml")))
+		} else {
+			t.Channels = append(t.Channels, wrapped.Channels...)
+		}
+	}
+
+	// flows.yaml
+	if b, err := os.ReadFile(filepath.Join(teamPath, "flows.yaml")); err == nil {
+		var wrapped struct {
+			Flows []types.Flow `yaml:"flows"`
+		}
+		if err := yaml.Unmarshal(b, &wrapped); err != nil {
+			*diags = append(*diags, diag.Error("YAML_FLOWS_PARSE",
+				fmt.Sprintf("failed to parse %s: %v", filepath.Join(teamPath, "flows.yaml"), err),
+				filepath.Join(teamPath, "flows.yaml")))
+		} else {
+			for _, fy := range wrapped.Flows {
+				t.Flows = append(t.Flows, fy)
+			}
+		}
+	}
+
+	// silence_windows.yaml
+	if b, err := os.ReadFile(filepath.Join(teamPath, "silence_windows.yaml")); err == nil {
+		var wrapped struct {
+			SilenceWindows []types.SilenceWindow `yaml:"silence_windows"`
+		}
+		if err := yaml.Unmarshal(b, &wrapped); err != nil {
+			*diags = append(*diags, diag.Error("YAML_TEAM_SILENCE_PARSE",
+				fmt.Sprintf("failed to parse %s: %v", filepath.Join(teamPath, "silence_windows.yaml"), err),
+				filepath.Join(teamPath, "silence_windows.yaml")))
+		} else {
+			t.SilenceWindows = append(t.SilenceWindows, wrapped.SilenceWindows...)
+		}
+	}
+
+	// inhibitors.yaml (optional)
+	if b, err := os.ReadFile(filepath.Join(teamPath, "inhibitors.yaml")); err == nil {
+		var wrapped struct {
+			Inhibitors []types.Inhibitor `yaml:"inhibitors"`
+		}
+		if err := yaml.Unmarshal(b, &wrapped); err != nil {
+			*diags = append(*diags, diag.Error("YAML_TEAM_INHIBITORS_PARSE",
+				fmt.Sprintf("failed to parse %s: %v", filepath.Join(teamPath, "inhibitors.yaml"), err),
+				filepath.Join(teamPath, "inhibitors.yaml")))
+		} else {
+			// If you’ve added Project.Inhibitors or Team.Inhibitors, attach accordingly.
+			// For now we ignore or could stash to a reserved field like Global.Raw for later.
+			// Example if you add Inhibitors on Team:
+			// t.Inhibitors = append(t.Inhibitors, wrapped.Inhibitors...)
+			_ = wrapped
 		}
 	}
 }

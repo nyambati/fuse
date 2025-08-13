@@ -16,35 +16,31 @@ type Diagnostic struct {
 	Message string `json:"message"`
 	File    string `json:"file,omitempty"`
 	Line    int    `json:"line,omitempty"`
-	// Optional: Column, Hint, etc.
 }
 
-func Error(code, msg, file string, line int) Diagnostic {
+func Error(code, msg, file string) Diagnostic {
 	return Diagnostic{
 		Level:   LevelError,
 		Code:    code,
 		Message: msg,
 		File:    file,
-		Line:    line,
 	}
 }
 
-func Warn(code, msg, file string, line int) Diagnostic {
+func Warn(code, msg, file string) Diagnostic {
 	return Diagnostic{
 		Level:   LevelWarn,
 		Code:    code,
 		Message: msg,
 		File:    file,
-		Line:    line,
 	}
 }
 
-func Info(code, msg, file string, line int) Diagnostic {
+func Info(code, msg, file string) Diagnostic {
 	return Diagnostic{
 		Level:   LevelInfo,
 		Code:    code,
 		Message: msg,
 		File:    file,
-		Line:    line,
 	}
 }

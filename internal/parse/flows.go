@@ -37,7 +37,7 @@ func mapFlowToRoutes(team types.Team, idx int, f types.Flow) ([]am.Route, []diag
 	)
 
 	// ---- notify must exist ----
-	if len(f.Notify) == 0 {
+	if f.Notify == "" {
 		diags = append(diags, diag.Diagnostic{
 			Level:   diag.LevelError,
 			Code:    "FLOW_NOTIFY_EMPTY",
@@ -53,33 +53,21 @@ func mapFlowToRoutes(team types.Team, idx int, f types.Flow) ([]am.Route, []diag
 		diags = append(diags, mDiags...)
 	}
 
-	// ---- expand multi-notify into sibling routes ----
-	for _, dest := range f.Notify {
-		if dest == "" {
-			diags = append(diags, diag.Diagnostic{
-				Level:   diag.LevelError,
-				Code:    "FLOW_NOTIFY_EMPTY_ITEM",
-				Message: fmt.Sprintf("flows[%d] has an empty notify entry", idx),
-				File:    team.Path,
-			})
-			continue
-		}
-
-		r := am.Route{
-			Receiver:          dest,
-			GroupBy:           append([]string{}, f.GroupBy...),
-			GroupWait:         f.WaitFor,
-			GroupInterval:     f.GroupInterval,
-			RepeatInterval:    f.RepeatAfter,
-			Matchers:          matchers,
-			MuteTimeIntervals: append([]string{}, f.SilenceWhen...),
-		}
-		if f.Continue != nil {
-			r.Continue = *f.Continue
-		}
-
-		routes = append(routes, r)
+	r := am.Route{
+		Receiver:          f.Notify,
+		GroupBy:           append([]string{}, f.GroupBy...),
+		GroupWait:         f.WaitFor,
+		GroupInterval:     f.GroupInterval,
+		RepeatInterval:    f.RepeatAfter,
+		Matchers:          matchers,
+		MuteTimeIntervals: append([]string{}, f.SilenceWhen...),
 	}
+
+	if f.Continue != nil {
+		r.Continue = *f.Continue
+	}
+
+	routes = append(routes, r)
 
 	return routes, diags
 }
