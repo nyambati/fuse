@@ -1,0 +1,6 @@
+route:
+  receiver: "default"
+  group_by: ["alertname"]
+  group_wait: "30s"
+  group_interval: "5m"
+  continue: true

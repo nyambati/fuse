@@ -54,13 +54,13 @@ func mapFlowToRoutes(team types.Team, idx int, f types.Flow) ([]am.Route, []diag
 	}
 
 	r := am.Route{
-		Receiver:          f.Notify,
-		GroupBy:           append([]string{}, f.GroupBy...),
-		GroupWait:         f.WaitFor,
-		GroupInterval:     f.GroupInterval,
-		RepeatInterval:    f.RepeatAfter,
-		Matchers:          matchers,
-		MuteTimeIntervals: append([]string{}, f.SilenceWhen...),
+		Receiver:       f.Notify,
+		GroupBy:        append([]string{}, f.GroupBy...),
+		GroupWait:      f.WaitFor,
+		GroupInterval:  f.GroupInterval,
+		RepeatInterval: f.RepeatAfter,
+		Matchers:       matchers,
+		TimeIntervals:  append([]string{}, f.SilenceWhen...),
 	}
 
 	if f.Continue != nil {

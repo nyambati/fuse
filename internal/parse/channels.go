@@ -49,11 +49,11 @@ func buildReceiver(team types.Team, idx int, channel types.Channel) (*am.Receive
 
 	receiver := am.Receiver{Name: name}
 
-	if len(channel.Params) < 1 {
+	if len(channel.Configs) < 1 {
 		diags = append(diags, diag.Diagnostic{
 			Level:   diag.LevelWarn,
-			Code:    "CHAN_PARAMS_EMPTY",
-			Message: fmt.Sprintf("%s channel %q in team %q has no params", channel.Type, name, team.Name),
+			Code:    "CHAN_CONFIGS_EMPTY",
+			Message: fmt.Sprintf("%s channel %q in team %q has no configs", channel.Type, name, team.Name),
 		})
 		return nil, diags
 	}
@@ -62,9 +62,9 @@ func buildReceiver(team types.Team, idx int, channel types.Channel) (*am.Receive
 	channelType := strings.ToLower(strings.TrimSpace(channel.Type))
 	switch channelType {
 	case "slack":
-		receiver.SlackConfigs = []map[string]any{channel.Params}
+		receiver.SlackConfigs = channel.Configs
 	case "opsgenie":
-		receiver.OpsgenieConfigs = []map[string]any{channel.Params}
+		receiver.OpsgenieConfigs = channel.Configs
 	default:
 		diags = append(diags, diag.Diagnostic{
 			Level:   diag.LevelError,

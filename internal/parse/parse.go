@@ -28,15 +28,15 @@ func ToAlertmanager(proj types.Project, prov secrets.Provider) (am.Config, []dia
 
 	cfg.Receivers = recvs
 
-	// Routes (flows)
-	routes, fDiags := BuildFlowRoutes(proj)
-	if len(fDiags) > 0 {
-		diags = append(diags, fDiags...)
-	}
-	cfg.Route = &am.Route{
-		GroupBy: []string{"alertname"}, // root-level defaults
-		Routes:  routes,
-	}
+	// // Routes (flows)
+	// routes, fDiags := BuildFlowRoutes(proj)
+	// if len(fDiags) > 0 {
+	// 	diags = append(diags, fDiags...)
+	// }
+
+	// proj.RootRoute.Routes = routes
+
+	cfg.Route = proj.RootRoute
 
 	// TimeIntervals (silence windows)
 	intervals, tDiags := BuildTimeIntervals(proj)
@@ -57,7 +57,7 @@ func ToAlertmanager(proj types.Project, prov secrets.Provider) (am.Config, []dia
 	}
 
 	// Global config (from DSL global section) — MVP: straight copy
-	cfg.Global = proj.Global.Raw
+	cfg.Global = proj.Global
 
 	// TODO (later): secrets resolution via prov
 	_ = prov // currently unused until secrets resolution is added

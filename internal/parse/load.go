@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/nyambati/fuse/internal/am"
 	"github.com/nyambati/fuse/internal/diag"
 	"github.com/nyambati/fuse/internal/types"
 	"github.com/stretchr/testify/assert/yaml"
@@ -138,9 +139,9 @@ func loadGlobal(root string, p *types.Project) error {
 
 	if g, ok := raw["global"]; ok {
 		if m, ok2 := g.(map[string]any); ok2 {
-			p.Global.Raw = m
+			p.Global = m
 		} else {
-			p.Global.Raw = raw
+			p.Global = raw
 		}
 	}
 
@@ -179,6 +180,21 @@ func loadGlobal(root string, p *types.Project) error {
 		return fmt.Errorf("failed to parse global/inhibitors.yaml: %w", err)
 	}
 	p.Inhibitors = append(p.Inhibitors, ihWrapped.Inhibitors...)
+
+	// global/root_route.yaml
+	b, err = os.ReadFile(filepath.Join(root, "global", "root_route.yaml"))
+	if err != nil && !os.IsNotExist(err) {
+		return fmt.Errorf("failed to read global/root_route.yaml: %w", err)
+	}
+
+	var routeWrapped struct {
+		Route am.Route `yaml:"route"`
+	}
+	if err := yaml.Unmarshal(b, &routeWrapped); err != nil {
+		return fmt.Errorf("failed to parse global/root_route.yaml: %w", err)
+	}
+
+	p.RootRoute = &routeWrapped.Route
 
 	return nil
 }

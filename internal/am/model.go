@@ -16,15 +16,15 @@ type Receiver struct {
 }
 
 type Route struct {
-	Receiver          string   `yaml:"receiver,omitempty"`
-	GroupBy           []string `yaml:"group_by,omitempty"`
-	GroupWait         string   `yaml:"group_wait,omitempty"`
-	GroupInterval     string   `yaml:"group_interval,omitempty"`
-	RepeatInterval    string   `yaml:"repeat_interval,omitempty"`
-	Matchers          []string `yaml:"matchers,omitempty"`
-	Continue          bool     `yaml:"continue,omitempty"`
-	MuteTimeIntervals []string `yaml:"mute_time_intervals,omitempty"`
-	Routes            []Route  `yaml:"routes,omitempty"`
+	Receiver       string   `yaml:"receiver,omitempty"`
+	GroupBy        []string `yaml:"group_by,omitempty"`
+	GroupWait      string   `yaml:"group_wait,omitempty"`
+	GroupInterval  string   `yaml:"group_interval,omitempty"`
+	RepeatInterval string   `yaml:"repeat_interval,omitempty"`
+	Matchers       []string `yaml:"matchers,omitempty"`
+	Continue       bool     `yaml:"continue,omitempty"`
+	TimeIntervals  []string `yaml:"time_intervals,omitempty"`
+	Routes         []Route  `yaml:"routes,omitempty"`
 }
 
 type InhibitRule struct {

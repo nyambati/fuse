@@ -60,8 +60,6 @@ func newValidateCmd() *cobra.Command {
 			all := validate.Merge(loadDiags, parseDiags, valDiags, toolDiags)
 			exit := validate.ExitCode(all, strict)
 
-			utils.PrettyPrint(amc)
-
 			// 8) Output
 			if jsonOut {
 				enc := json.NewEncoder(os.Stdout)

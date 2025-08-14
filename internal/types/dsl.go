@@ -1,5 +1,7 @@
 package types
 
+import "github.com/nyambati/fuse/internal/am"
+
 //
 // ===== v0.1 DSL Types (skeleton) =====
 //
@@ -8,16 +10,14 @@ package types
 type Project struct {
 	Root           string
 	Global         Global
+	RootRoute      *am.Route
 	SilenceWindows []SilenceWindow
 	Inhibitors     []Inhibitor
 	Teams          []Team
 }
 
 // Global mirrors Alertmanager's global section (keep flexible for now).
-type Global struct {
-	// Raw holds decoded YAML for future mapping (keep permissive).
-	Raw map[string]any
-}
+type Global map[string]any
 
 // SilenceWindow defines a named recurring mute period.
 type SilenceWindow struct {
@@ -33,9 +33,9 @@ type SilenceWindow struct {
 
 // Channel represents a notification destination.
 type Channel struct {
-	Name   string         `yaml:"name"`
-	Type   string         `yaml:"type"`
-	Params map[string]any `yaml:"params,omitempty"`
+	Name    string           `yaml:"name"`
+	Type    string           `yaml:"type"`
+	Configs []map[string]any `yaml:"configs,omitempty"`
 }
 
 // Flow is a single routing rule inside flows.yaml.
