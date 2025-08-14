@@ -1,4 +1,4 @@
-package parse
+package dsl
 
 import (
 	"fmt"
@@ -9,7 +9,6 @@ import (
 
 	"github.com/nyambati/fuse/internal/am"
 	"github.com/nyambati/fuse/internal/diag"
-	"github.com/nyambati/fuse/internal/types"
 	"github.com/stretchr/testify/assert/yaml"
 )
 
@@ -21,10 +20,10 @@ import (
 // Parsing of YAML files is intentionally deferred to parser layer; this
 // function focuses on discovery and path wiring. It returns diagnostics
 // (warnings/errors) that occur during discovery.
-func LoadProject(root string, teamFilter []string) (types.Project, []diag.Diagnostic) {
+func LoadProject(root string, teamFilter []string) (Project, []diag.Diagnostic) {
 	var diags []diag.Diagnostic
 
-	p := types.Project{
+	p := Project{
 		Root: root,
 		// Global/SilenceWindows will be populated by a loader later.
 	}
@@ -89,7 +88,7 @@ func LoadProject(root string, teamFilter []string) (types.Project, []diag.Diagno
 		}
 
 		teamPath := filepath.Join(teamsDir, name)
-		team := types.Team{
+		team := Team{
 			Name: name,
 			Path: teamPath,
 		}
@@ -125,7 +124,7 @@ func LoadProject(root string, teamFilter []string) (types.Project, []diag.Diagno
 	return p, diags
 }
 
-func loadGlobal(root string, p *types.Project) error {
+func loadGlobal(root string, p *Project) error {
 	// global/global.yaml
 	b, err := os.ReadFile(filepath.Join(root, "global", "global.yaml"))
 	if err != nil {
@@ -155,7 +154,7 @@ func loadGlobal(root string, p *types.Project) error {
 	}
 
 	var swWrapped struct {
-		SilenceWindows []types.SilenceWindow `yaml:"silence_windows"`
+		SilenceWindows []SilenceWindow `yaml:"silence_windows"`
 	}
 
 	if err := yaml.Unmarshal(b, &swWrapped); err != nil {
@@ -174,7 +173,7 @@ func loadGlobal(root string, p *types.Project) error {
 	}
 
 	var ihWrapped struct {
-		Inhibitors []types.Inhibitor `yaml:"inhibitors"`
+		Inhibitors []Inhibitor `yaml:"inhibitors"`
 	}
 	if err := yaml.Unmarshal(b, &ihWrapped); err != nil {
 		return fmt.Errorf("failed to parse global/inhibitors.yaml: %w", err)
@@ -194,19 +193,19 @@ func loadGlobal(root string, p *types.Project) error {
 		return fmt.Errorf("failed to parse global/root_route.yaml: %w", err)
 	}
 
-	p.RootRoute = &routeWrapped.Route
+	p.RootRoute = routeWrapped.Route
 
 	return nil
 }
 
-func loadTeam(teamPath string, t *types.Team) error {
+func loadTeam(teamPath string, t *Team) error {
 	// channels.yaml
 	b, err := os.ReadFile(filepath.Join(teamPath, "channels.yaml"))
 	if err != nil {
 		return fmt.Errorf("failed to read %s: %w", filepath.Join(teamPath, "channels.yaml"), err)
 	}
 	var chWrapped struct {
-		Channels []types.Channel `yaml:"channels"`
+		Channels []Channel `yaml:"channels"`
 	}
 	if err := yaml.Unmarshal(b, &chWrapped); err != nil {
 		return fmt.Errorf("failed to parse %s: %w", filepath.Join(teamPath, "channels.yaml"), err)
@@ -220,7 +219,7 @@ func loadTeam(teamPath string, t *types.Team) error {
 		return fmt.Errorf("failed to read %s: %w", filepath.Join(teamPath, "flows.yaml"), err)
 	}
 	var fWrapped struct {
-		Flows []types.Flow `yaml:"flows"`
+		Flows []Flow `yaml:"flows"`
 	}
 
 	if err := yaml.Unmarshal(b, &fWrapped); err != nil {
@@ -238,7 +237,7 @@ func loadTeam(teamPath string, t *types.Team) error {
 	}
 
 	var swWrapped struct {
-		SilenceWindows []types.SilenceWindow `yaml:"silence_windows"`
+		SilenceWindows []SilenceWindow `yaml:"silence_windows"`
 	}
 	if err := yaml.Unmarshal(b, &swWrapped); err != nil {
 		return fmt.Errorf("failed to parse %s: %w", filepath.Join(teamPath, "silence_windows.yaml"), err)
@@ -256,7 +255,7 @@ func loadTeam(teamPath string, t *types.Team) error {
 	// }
 
 	// var ihwrapped struct {
-	// 	Inhibitors []types.Inhibitor `yaml:"inhibitors"`
+	// 	Inhibitors []Inhibitor `yaml:"inhibitors"`
 	// }
 
 	// if err := yaml.Unmarshal(b, &ihwrapped); err != nil {

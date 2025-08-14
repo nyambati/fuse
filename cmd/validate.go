@@ -8,6 +8,7 @@ import (
 	"github.com/spf13/cobra"
 
 	"github.com/nyambati/fuse/internal/am"
+	"github.com/nyambati/fuse/internal/dsl"
 	"github.com/nyambati/fuse/internal/parse"
 	"github.com/nyambati/fuse/internal/secrets"
 	"github.com/nyambati/fuse/internal/utils"
@@ -36,7 +37,7 @@ func newValidateCmd() *cobra.Command {
 			}
 
 			// 2) Load DSL (global + teams)
-			proj, loadDiags := parse.LoadProject(root, teams)
+			proj, loadDiags := dsl.LoadProject(root, teams)
 			if len(loadDiags) > 0 {
 				// continue; we’ll include loader diagnostics
 			}

@@ -5,7 +5,7 @@ import (
 	"sort"
 
 	"github.com/nyambati/fuse/internal/diag"
-	"github.com/nyambati/fuse/internal/types"
+	"github.com/nyambati/fuse/internal/dsl"
 )
 
 // Options for validation behavior
@@ -15,7 +15,7 @@ type Options struct {
 
 // Project runs semantic validation on a loaded DSL project and the derived AM config.
 // amc is intentionally typed as any to avoid import cycles; richer checks can be added later.
-func Project(proj types.Project, amc any, opts Options) []diag.Diagnostic {
+func Project(proj dsl.Project, amc any, opts Options) []diag.Diagnostic {
 	var diags []diag.Diagnostic
 
 	// ---- Basic project-level checks (skeleton) ----

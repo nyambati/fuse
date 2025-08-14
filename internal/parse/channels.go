@@ -6,13 +6,13 @@ import (
 
 	"github.com/nyambati/fuse/internal/am"
 	"github.com/nyambati/fuse/internal/diag"
-	"github.com/nyambati/fuse/internal/types"
+	"github.com/nyambati/fuse/internal/dsl"
 )
 
 // BuildReceivers maps team channels into AM receivers.
 // Does not deduplicate — that’s handled later in validation.
 // Channel.Type determines which AM config array gets populated.
-func BuildReceivers(proj types.Project) ([]am.Receiver, []diag.Diagnostic) {
+func BuildReceivers(proj dsl.Project) ([]am.Receiver, []diag.Diagnostic) {
 	var (
 		receivers   []am.Receiver
 		diagnostics []diag.Diagnostic
@@ -32,7 +32,7 @@ func BuildReceivers(proj types.Project) ([]am.Receiver, []diag.Diagnostic) {
 }
 
 // buildReceiver processes a single channel and returns a receiver and any diagnostics.
-func buildReceiver(team types.Team, idx int, channel types.Channel) (*am.Receiver, []diag.Diagnostic) {
+func buildReceiver(team dsl.Team, idx int, channel dsl.Channel) (*am.Receiver, []diag.Diagnostic) {
 	var diags []diag.Diagnostic
 
 	// Validate and normalize the channel name

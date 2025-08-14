@@ -3,7 +3,7 @@ package am
 type Config struct {
 	Global        map[string]any    `yaml:"global,omitempty"`
 	Receivers     []Receiver        `yaml:"receivers,omitempty"`
-	Route         *Route            `yaml:"route,omitempty"`
+	Route         Route             `yaml:"route,omitempty"`
 	InhibitRules  []InhibitRule     `yaml:"inhibit_rules,omitempty"`
 	TimeIntervals []TimeIntervalSet `yaml:"time_intervals,omitempty"`
 }

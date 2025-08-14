@@ -1,23 +1,35 @@
-package types
+package dsl
 
-import "github.com/nyambati/fuse/internal/am"
+import (
+	"github.com/nyambati/fuse/internal/am"
+)
 
 //
 // ===== v0.1 DSL Types (skeleton) =====
 //
 
+// Global mirrors Alertmanager's global section (keep flexible for now).
+type Global map[string]any
+
 // Project is the in-memory representation of a Fuse project DSL.
 type Project struct {
 	Root           string
 	Global         Global
-	RootRoute      *am.Route
+	RootRoute      am.Route
 	SilenceWindows []SilenceWindow
 	Inhibitors     []Inhibitor
 	Teams          []Team
 }
 
-// Global mirrors Alertmanager's global section (keep flexible for now).
-type Global map[string]any
+// Team collects a team's DSL files.
+type Team struct {
+	Name           string
+	Path           string
+	Channels       []Channel
+	Flows          []Flow
+	SilenceWindows []SilenceWindow
+	// Future: Alerts, Templates references, etc.
+}
 
 // SilenceWindow defines a named recurring mute period.
 type SilenceWindow struct {
@@ -56,14 +68,4 @@ type Inhibitor struct {
 	If       map[string]string `yaml:"if"`
 	Suppress map[string]string `yaml:"suppress"`
 	When     []string          `yaml:"when"`
-}
-
-// Team collects a team's DSL files.
-type Team struct {
-	Name           string
-	Path           string
-	Channels       []Channel
-	Flows          []Flow
-	SilenceWindows []SilenceWindow
-	// Future: Alerts, Templates references, etc.
 }

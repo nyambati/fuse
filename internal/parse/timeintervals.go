@@ -7,14 +7,14 @@ import (
 
 	"github.com/nyambati/fuse/internal/am"
 	"github.com/nyambati/fuse/internal/diag"
-	"github.com/nyambati/fuse/internal/types"
+	"github.com/nyambati/fuse/internal/dsl"
 )
 
 var timeRangeRe = regexp.MustCompile(`^\s*([0-2]?\d:[0-5]\d)\s*-\s*([0-2]?\d:[0-5]\d)\s*$`)
 
 // BuildTimeIntervals maps global + team silence_windows into AM time_intervals.
 // Team-level windows can shadow global ones with the same name (warn).
-func BuildTimeIntervals(proj types.Project) ([]am.TimeIntervalSet, []diag.Diagnostic) {
+func BuildTimeIntervals(proj dsl.Project) ([]am.TimeIntervalSet, []diag.Diagnostic) {
 	var (
 		sets  []am.TimeIntervalSet
 		diags []diag.Diagnostic
@@ -22,7 +22,7 @@ func BuildTimeIntervals(proj types.Project) ([]am.TimeIntervalSet, []diag.Diagno
 
 	seen := map[string]string{} // name -> scope ("global" or "team/<name>")
 
-	add := func(scope string, sw types.SilenceWindow) {
+	add := func(scope string, sw dsl.SilenceWindow) {
 		name := strings.TrimSpace(sw.Name)
 		if name == "" {
 			diags = append(diags, diag.Diagnostic{
