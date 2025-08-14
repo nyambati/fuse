@@ -218,6 +218,7 @@ func loadTeam(teamPath string, t *Team) error {
 	if err != nil {
 		return fmt.Errorf("failed to read %s: %w", filepath.Join(teamPath, "flows.yaml"), err)
 	}
+
 	var fWrapped struct {
 		Flows []Flow `yaml:"flows"`
 	}

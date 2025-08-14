@@ -50,16 +50,22 @@ type Channel struct {
 	Configs []map[string]any `yaml:"configs,omitempty"`
 }
 
+type Matcher struct {
+	Label string `yaml:"label"`
+	Op    string `yaml:"op"`
+	Value string `yaml:"value"`
+}
+
 // Flow is a single routing rule inside flows.yaml.
 type Flow struct {
-	Notify        string            // normalized: always a slice (string in YAML expands to 1 item)
-	When          map[string]string `yaml:"when"`
-	GroupBy       []string          `yaml:"group_by,omitempty"`
-	WaitFor       string            `yaml:"wait_for,omitempty"`
-	GroupInterval string            `yaml:"group_interval,omitempty"`
-	RepeatAfter   string            `yaml:"repeat_after,omitempty"`
-	SilenceWhen   []string          `yaml:"silence_when,omitempty"`
-	Continue      *bool             `yaml:"continue,omitempty"`
+	Notify        string    // normalized: always a slice (string in YAML expands to 1 item)
+	When          []Matcher `yaml:"when"`
+	GroupBy       []string  `yaml:"group_by,omitempty"`
+	WaitFor       string    `yaml:"wait_for,omitempty"`
+	GroupInterval string    `yaml:"group_interval,omitempty"`
+	RepeatAfter   string    `yaml:"repeat_after,omitempty"`
+	SilenceWhen   []string  `yaml:"silence_when,omitempty"`
+	Continue      *bool     `yaml:"continue,omitempty"`
 }
 
 // Inhibitor represents a simplified inhibit rule.

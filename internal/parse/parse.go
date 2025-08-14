@@ -45,11 +45,9 @@ func ToAlertmanager(proj dsl.Project, prov secrets.Provider) (am.Config, []diag.
 
 	// InhibitRules — copy directly from DSL
 	for _, ir := range proj.Inhibitors {
-		sourceMatchers, _ := ToMatchers(ir.If)
-		targetMatchers, _ := ToMatchers(ir.Suppress)
 		cfg.InhibitRules = append(cfg.InhibitRules, am.InhibitRule{
-			SourceMatchers: sourceMatchers,
-			TargetMatchers: targetMatchers,
+			SourceMatchers: ir.If,
+			TargetMatchers: ir.Suppress,
 			Equal:          ir.When,
 		})
 	}
