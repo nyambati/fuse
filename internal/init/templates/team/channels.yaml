@@ -1,5 +1,6 @@
 channels:
   - name: slack
     type: slack
-    params:
-      webhook_url: https://hooks.slack.com/services/...
+    configs:
+      - channel: C1234567890
+        webhook_url: https://hooks.slack.com/services

@@ -15,6 +15,8 @@ func NewRootCmd() *cobra.Command {
 	// Add subcommands
 	root.AddCommand(newInitCmd())
 	root.AddCommand(newValidateCmd())
+	root.SilenceUsage = true
+	root.SilenceErrors = true
 
 	return root
 }
