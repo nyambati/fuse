@@ -14,13 +14,10 @@ type Options struct {
 }
 
 // Project runs semantic validation on a loaded DSL project and the derived AM config.
-// amc is intentionally typed as any to avoid import cycles; richer checks can be added later.
 func Project(proj dsl.Project, amc any, opts Options) []diag.Diagnostic {
 	var diags []diag.Diagnostic
 
-	// ---- Basic project-level checks (skeleton) ----
-
-	// Ensure project root is set.
+	// ---- Basic project-level checks ----
 	if proj.Root == "" {
 		diags = append(diags, diag.Diagnostic{
 			Level:   diag.LevelError,
@@ -29,7 +26,7 @@ func Project(proj dsl.Project, amc any, opts Options) []diag.Diagnostic {
 		})
 	}
 
-	// Teams must have unique names (discovery should guarantee, but double-check).
+	// Teams must have unique names (safety check).
 	seen := map[string]struct{}{}
 	for _, t := range proj.Teams {
 		if t.Name == "" {
@@ -49,17 +46,105 @@ func Project(proj dsl.Project, amc any, opts Options) []diag.Diagnostic {
 				File:    t.Path,
 			})
 		}
+
+		diags = append(diags, validateFlows(t)...)
 		seen[t.Name] = struct{}{}
 	}
 
 	// TODO (next steps):
 	// - Validate silence_windows names uniqueness (global vs team shadowing -> warn)
 	// - Validate channels: unique names within a team, required params per type
-	// - Validate flows: notify exists, references to channels & silence_windows resolve
 	// - Validate inhibitors: fields present, matcher syntax sanity
 	// - Time/duration parsing checks for wait/group/repeat
 
 	return diags
+}
+
+// validateFlows checks notify presence, channel existence, when block validity, and duplicates.
+func validateFlows(team dsl.Team) []diag.Diagnostic {
+	var diags []diag.Diagnostic
+
+	// Build a set of channels in this team
+	channelSet := make(map[string]struct{})
+	for _, ch := range team.Channels {
+		channelSet[ch.Name] = struct{}{}
+	}
+
+	// Track seen (notify, when) combinations for duplicate detection
+	seenCombos := make(map[string]string)
+
+	for _, flow := range team.Flows {
+		// 1. Missing notify
+		if len(flow.Notify) == 0 {
+			diags = append(diags, diag.Diagnostic{
+				Level:   diag.LevelError,
+				Code:    "FLOW_NOTIFY_EMPTY",
+				Message: fmt.Sprintf("flow in team %q has no notify target", team.Name),
+			})
+		}
+
+		// 2. Non-existent notify channel
+
+		if _, ok := channelSet[flow.Notify]; !ok {
+			diags = append(diags, diag.Diagnostic{
+				Level:   diag.LevelError,
+				Code:    "FLOW_NOTIFY_UNKNOWN",
+				Message: fmt.Sprintf("flow in team %q references unknown channel %q", team.Name, flow.Notify),
+			})
+		}
+
+		// 3. Empty or missing when
+		if len(flow.When) == 0 {
+			diags = append(diags, diag.Diagnostic{
+				Level:   diag.LevelError,
+				Code:    "FLOW_WHEN_EMPTY",
+				Message: fmt.Sprintf("flow in team %q has no conditions (when block is empty)", team.Name),
+			})
+		}
+
+		// 4. Invalid matcher syntax
+		for k, v := range flow.When {
+			if err := validateMatcher(k, v); err != nil {
+				diags = append(diags, diag.Diagnostic{
+					Level:   diag.LevelError,
+					Code:    "FLOW_MATCHER_INVALID",
+					Message: fmt.Sprintf("invalid matcher in flow (team %q): %v", team.Name, err),
+				})
+			}
+		}
+
+		// 5. Duplicate flow matcher sets
+		hash := hashFlow(flow)
+		if existing, ok := seenCombos[hash]; ok {
+			diags = append(diags, diag.Diagnostic{
+				Level:   diag.LevelWarn,
+				Code:    "FLOW_DUPLICATE",
+				Message: fmt.Sprintf("flow in team %q duplicates another flow: %s", team.Name, existing),
+			})
+		} else {
+			seenCombos[hash] = fmt.Sprintf("notify=%v when=%v", flow.Notify, flow.When)
+		}
+	}
+
+	return diags
+}
+
+// validateMatcher checks that the matcher key/value is syntactically valid.
+// This is a placeholder — expand with proper Alertmanager matcher parsing.
+func validateMatcher(key string, val any) error {
+	// For now, reject empty keys and values
+	if key == "" {
+		return fmt.Errorf("matcher key is empty")
+	}
+	if val == nil || val == "" {
+		return fmt.Errorf("matcher %q has empty value", key)
+	}
+	return nil
+}
+
+// hashFlow creates a simple hash key for a flow based on notify + when map.
+func hashFlow(flow dsl.Flow) string {
+	return fmt.Sprintf("notify=%v when=%v", flow.Notify, flow.When)
 }
 
 // Merge combines multiple diagnostic slices and sorts them
