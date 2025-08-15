@@ -6,6 +6,7 @@ import (
 
 	"github.com/nyambati/fuse/internal/diag"
 	"github.com/nyambati/fuse/internal/dsl"
+	"github.com/nyambati/fuse/internal/validate/validators"
 )
 
 // Options for validation behavior
@@ -47,7 +48,10 @@ func Project(proj dsl.Project, amc any, opts Options) []diag.Diagnostic {
 			})
 		}
 
-		diags = append(diags, validateFlows(t)...)
+		// validate flows
+		diags = append(diags, validators.ValidateFlows(t)...)
+
+		diags = append(diags, validators.ValidateChannels(t.Name, t.Channels)...)
 		seen[t.Name] = struct{}{}
 	}
 

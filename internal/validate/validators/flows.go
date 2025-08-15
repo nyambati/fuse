@@ -1,4 +1,4 @@
-package validate
+package validators
 
 import (
 	"fmt"
@@ -10,7 +10,7 @@ import (
 )
 
 // validateFlows checks notify presence, channel existence, when block validity, and duplicates.
-func validateFlows(team dsl.Team) []diag.Diagnostic {
+func ValidateFlows(team dsl.Team) []diag.Diagnostic {
 	var diags []diag.Diagnostic
 
 	// Build a set of channels in this team
