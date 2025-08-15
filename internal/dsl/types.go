@@ -28,6 +28,7 @@ type Team struct {
 	Channels       []Channel
 	Flows          []Flow
 	SilenceWindows []SilenceWindow
+	Inhibitors     []Inhibitor
 	// Future: Alerts, Templates references, etc.
 }
 

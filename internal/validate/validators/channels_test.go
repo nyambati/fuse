@@ -65,7 +65,12 @@ func TestValidateChannels(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			diags := validators.ValidateChannels("payments", tt.channels)
+
+			teams := []dsl.Team{
+				{Name: "payments", Channels: tt.channels},
+			}
+
+			diags := validators.NewChannelsValidator(teams).Validate()
 
 			var gotCodes []string
 			for _, d := range diags {

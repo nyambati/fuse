@@ -42,7 +42,7 @@ func InitProject(options InitOptions) error {
 	}
 
 	if !options.Quiet {
-		fmt.Printf("Initialized fuseproject at %s\n", options.Path)
+		fmt.Printf("Initialized fuse project at %s\n", options.Path)
 	}
 
 	return nil

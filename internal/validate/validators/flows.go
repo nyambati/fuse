@@ -9,6 +9,24 @@ import (
 	"github.com/nyambati/fuse/internal/dsl"
 )
 
+type FlowValidator struct {
+	teams []dsl.Team
+}
+
+func NewFlowValidator(teams []dsl.Team) *FlowValidator {
+	return &FlowValidator{
+		teams: teams,
+	}
+}
+
+func (v *FlowValidator) Validate() []diag.Diagnostic {
+	var diags []diag.Diagnostic
+	for _, team := range v.teams {
+		diags = append(diags, ValidateFlows(team)...)
+	}
+	return diags
+}
+
 // validateFlows checks notify presence, channel existence, when block validity, and duplicates.
 func ValidateFlows(team dsl.Team) []diag.Diagnostic {
 	var diags []diag.Diagnostic

@@ -1,7 +1,6 @@
 package validate
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/nyambati/fuse/internal/diag"
@@ -27,39 +26,17 @@ func Project(proj dsl.Project, amc any, opts Options) []diag.Diagnostic {
 		})
 	}
 
-	// Teams must have unique names (safety check).
-	seen := map[string]struct{}{}
-	for _, t := range proj.Teams {
-		if t.Name == "" {
-			diags = append(diags, diag.Diagnostic{
-				Level:   diag.LevelWarn,
-				Code:    "TEAM_NAME_EMPTY",
-				Message: "a team folder has an empty name",
-				File:    t.Path,
-			})
-			continue
-		}
-		if _, ok := seen[t.Name]; ok {
-			diags = append(diags, diag.Diagnostic{
-				Level:   diag.LevelError,
-				Code:    "TEAM_NAME_DUP",
-				Message: fmt.Sprintf("duplicate team name %q", t.Name),
-				File:    t.Path,
-			})
-		}
-
-		// validate flows
-		diags = append(diags, validators.ValidateFlows(t)...)
-
-		diags = append(diags, validators.ValidateChannels(t.Name, t.Channels)...)
-		seen[t.Name] = struct{}{}
+	validators := []validators.Validator{
+		validators.NewTeamValidator(proj.Teams),
+		validators.NewFlowValidator(proj.Teams),
+		validators.NewChannelsValidator(proj.Teams),
+		validators.NewInhibitorsValidator(proj),
+		validators.NewSilenceWindowsValidator(proj),
 	}
 
-	// TODO (next steps):
-	// - Validate silence_windows names uniqueness (global vs team shadowing -> warn)
-	// - Validate channels: unique names within a team, required params per type
-	// - Validate inhibitors: fields present, matcher syntax sanity
-	// - Time/duration parsing checks for wait/group/repeat
+	for _, v := range validators {
+		diags = append(diags, v.Validate()...)
+	}
 
 	return diags
 }

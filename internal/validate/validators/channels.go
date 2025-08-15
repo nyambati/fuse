@@ -8,17 +8,35 @@ import (
 	"github.com/nyambati/fuse/internal/dsl"
 )
 
-type ChannelValidator interface {
+type ChannelsValidator struct {
+	teams []dsl.Team
+}
+
+type ChannelValidatorInterface interface {
 	Validate(ch dsl.Channel) []diag.Diagnostic
 }
 
-var channelValidators = map[string]ChannelValidator{}
+var channelValidators = map[string]ChannelValidatorInterface{}
 
-func RegisterChannelValidator(channelType string, v ChannelValidator) {
+func RegisterChannelValidator(channelType string, v ChannelValidatorInterface) {
 	channelValidators[channelType] = v
 }
 
-func ValidateChannels(teamName string, channels []dsl.Channel) []diag.Diagnostic {
+func NewChannelsValidator(teams []dsl.Team) ChannelsValidator {
+	return ChannelsValidator{
+		teams: teams,
+	}
+}
+
+func (v ChannelsValidator) Validate() []diag.Diagnostic {
+	var diags []diag.Diagnostic
+	for _, team := range v.teams {
+		diags = append(diags, validateChannels(team.Name, team.Channels)...)
+	}
+	return diags
+}
+
+func validateChannels(team string, channels []dsl.Channel) []diag.Diagnostic {
 	var diags []diag.Diagnostic
 	seen := map[string]struct{}{}
 
@@ -28,7 +46,7 @@ func ValidateChannels(teamName string, channels []dsl.Channel) []diag.Diagnostic
 			diags = append(diags, diag.Diagnostic{
 				Level:   diag.LevelError,
 				Code:    "CHANNEL_NO_NAME",
-				Message: fmt.Sprintf("channel in team %q has no name", teamName),
+				Message: fmt.Sprintf("channel in team %q has no name", team),
 			})
 			continue
 		}
@@ -38,7 +56,7 @@ func ValidateChannels(teamName string, channels []dsl.Channel) []diag.Diagnostic
 			diags = append(diags, diag.Diagnostic{
 				Level:   diag.LevelError,
 				Code:    "CHANNEL_DUP_NAME",
-				Message: fmt.Sprintf("duplicate channel name %q in team %q", ch.Name, teamName),
+				Message: fmt.Sprintf("duplicate channel name %q in team %q", ch.Name, team),
 			})
 		}
 
@@ -49,7 +67,7 @@ func ValidateChannels(teamName string, channels []dsl.Channel) []diag.Diagnostic
 			diags = append(diags, diag.Diagnostic{
 				Level:   diag.LevelError,
 				Code:    "CHANNEL_NO_TYPE",
-				Message: fmt.Sprintf("channel %q in team %q has no type", ch.Name, teamName),
+				Message: fmt.Sprintf("channel %q in team %q has no type", ch.Name, team),
 			})
 			continue
 		}
@@ -60,7 +78,7 @@ func ValidateChannels(teamName string, channels []dsl.Channel) []diag.Diagnostic
 			diags = append(diags, diag.Diagnostic{
 				Level:   diag.LevelError,
 				Code:    "CHANNEL_UNKNOWN_TYPE",
-				Message: fmt.Sprintf("channel %q in team %q has unknown type %q", ch.Name, teamName, ch.Type),
+				Message: fmt.Sprintf("channel %q in team %q has unknown type %q", ch.Name, team, ch.Type),
 			})
 			continue
 		}
