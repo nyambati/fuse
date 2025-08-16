@@ -95,39 +95,42 @@ func walk(v reflect.Value, path string, prov secrets.Provider, diags *[]diag.Dia
 		if v.Type().Key().Kind() != reflect.String {
 			return
 		}
+		// Use a temporary map to store changes, as we cannot safely iterate and modify a map that
+		// contains non-addressable structs.
+		tmpMap := reflect.MakeMap(v.Type())
 		iter := v.MapRange()
 		for iter.Next() {
 			k := iter.Key()
 			val := iter.Value()
 			childPath := fmt.Sprintf("%s[%q]", path, k.String())
 
-			// Handle string/interface secrets in map values
-			if val.Kind() == reflect.String {
-				debugLog(depth, "map value string at %s = %q", childPath, val.String())
-				if resolved, ok, isSecret := tryResolveSecret(val.String(), childPath, prov, diags); isSecret {
-					if ok {
-						debugLog(depth, "✅ resolved secret at %s -> %q", childPath, resolved)
-						v.SetMapIndex(k, reflect.ValueOf(resolved))
-					} else {
-						debugLog(depth, "❌ failed to resolve secret at %s", childPath)
-					}
-					continue
+			// Create a settable pointer to the value.
+			// If the value is an interface, create a pointer to what's *inside* it
+			// to ensure the contents can be modified.
+			var settableVal reflect.Value
+			if val.Kind() == reflect.Interface && !val.IsNil() {
+				elem := val.Elem()
+				if !elem.IsValid() {
+					tmpMap.SetMapIndex(k, val)
+					continue // Skip nil interface content
 				}
+				settableVal = reflect.New(elem.Type())
+				settableVal.Elem().Set(elem)
+			} else {
+				settableVal = reflect.New(val.Type())
+				settableVal.Elem().Set(val)
 			}
-			if val.Kind() == reflect.Interface && val.Elem().IsValid() && val.Elem().Kind() == reflect.String {
-				s := val.Elem().String()
-				debugLog(depth, "map value interface string at %s = %q", childPath, s)
-				if resolved, ok, isSecret := tryResolveSecret(s, childPath, prov, diags); isSecret {
-					if ok {
-						debugLog(depth, "✅ resolved secret at %s -> %q", childPath, resolved)
-						v.SetMapIndex(k, reflect.ValueOf(resolved))
-					} else {
-						debugLog(depth, "❌ failed to resolve secret at %s", childPath)
-					}
-					continue
-				}
-			}
-			walk(val, childPath, prov, diags, depth+1)
+
+			walk(settableVal, childPath, prov, diags, depth+1)
+
+			// After walk, put the modified value back into the temporary map.
+			// If the original value was an interface, the modified value is placed
+			// back directly. The map type `map[string]interface{}` will handle it.
+			tmpMap.SetMapIndex(k, settableVal.Elem())
+		}
+		// Replace the keys in the original map with the updated values.
+		for _, k := range tmpMap.MapKeys() {
+			v.SetMapIndex(k, tmpMap.MapIndex(k))
 		}
 
 	case reflect.Slice, reflect.Array:
