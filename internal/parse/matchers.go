@@ -2,8 +2,6 @@ package parse
 
 import (
 	"fmt"
-	"regexp"
-	"strings"
 
 	"github.com/nyambati/fuse/internal/diag"
 	"github.com/nyambati/fuse/internal/dsl"
@@ -25,18 +23,4 @@ func ToMatchers(when []dsl.Matcher) ([]string, []diag.Diagnostic) {
 		}
 	}
 	return out, diags
-}
-
-func validateRegex(p string) error {
-	// Allow empty? No — treat empty as invalid to avoid surprising catch-alls.
-	if strings.TrimSpace(p) == "" {
-		return fmt.Errorf("empty pattern")
-	}
-	_, err := regexp.Compile(p)
-	return err
-}
-
-func escapeQuotes(s string) string {
-	// Minimal escaping for AM matcher string form.
-	return strings.ReplaceAll(s, `"`, `\"`)
 }

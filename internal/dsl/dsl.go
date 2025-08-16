@@ -126,7 +126,7 @@ func LoadProject(root string, teamFilter []string) (Project, []diag.Diagnostic) 
 
 // unmarshalYamlFile is a helper to read and unmarshal a YAML file.
 // If optional is true, os.IsNotExist errors are ignored.
-func unmarshalYamlFile(filePath string, out interface{}, optional bool) error {
+func unmarshalYamlFile(filePath string, out any, optional bool) error {
 	b, err := os.ReadFile(filePath)
 	if err != nil {
 		if os.IsNotExist(err) && optional {

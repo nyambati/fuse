@@ -4,7 +4,6 @@ import (
 	"github.com/nyambati/fuse/internal/am"
 	"github.com/nyambati/fuse/internal/diag"
 	"github.com/nyambati/fuse/internal/dsl"
-	"github.com/nyambati/fuse/internal/secrets"
 )
 
 // ToAlertmanager translates a loaded Fuse project into an Alertmanager config.
@@ -14,7 +13,7 @@ import (
 //  2. Build Routes from flows (attached under root route)
 //  3. Build TimeIntervals from silence_windows
 //  4. Inhibit rules are passed through as-is from DSL (v0.1 simple copy)
-func ToAlertmanager(proj dsl.Project, prov secrets.Provider) (am.Config, []diag.Diagnostic) {
+func ToAlertmanager(proj dsl.Project) (am.Config, []diag.Diagnostic) {
 	var (
 		cfg   am.Config
 		diags []diag.Diagnostic
@@ -54,9 +53,6 @@ func ToAlertmanager(proj dsl.Project, prov secrets.Provider) (am.Config, []diag.
 
 	// Global config (from DSL global section) — MVP: straight copy
 	cfg.Global = proj.Global
-
-	// TODO (later): secrets resolution via prov
-	_ = prov // currently unused until secrets resolution is added
 
 	return cfg, diags
 }
