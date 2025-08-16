@@ -1,11 +1,11 @@
 package validate
 
 import (
-	"fmt"
 	"sort"
 
 	"github.com/nyambati/fuse/internal/diag"
-	"github.com/nyambati/fuse/internal/types"
+	"github.com/nyambati/fuse/internal/dsl"
+	"github.com/nyambati/fuse/internal/validate/validators"
 )
 
 // Options for validation behavior
@@ -14,13 +14,10 @@ type Options struct {
 }
 
 // Project runs semantic validation on a loaded DSL project and the derived AM config.
-// amc is intentionally typed as any to avoid import cycles; richer checks can be added later.
-func Project(proj types.Project, amc any, opts Options) []diag.Diagnostic {
+func Project(proj dsl.Project, amc any, opts Options) []diag.Diagnostic {
 	var diags []diag.Diagnostic
 
-	// ---- Basic project-level checks (skeleton) ----
-
-	// Ensure project root is set.
+	// ---- Basic project-level checks ----
 	if proj.Root == "" {
 		diags = append(diags, diag.Diagnostic{
 			Level:   diag.LevelError,
@@ -29,35 +26,17 @@ func Project(proj types.Project, amc any, opts Options) []diag.Diagnostic {
 		})
 	}
 
-	// Teams must have unique names (discovery should guarantee, but double-check).
-	seen := map[string]struct{}{}
-	for _, t := range proj.Teams {
-		if t.Name == "" {
-			diags = append(diags, diag.Diagnostic{
-				Level:   diag.LevelWarn,
-				Code:    "TEAM_NAME_EMPTY",
-				Message: "a team folder has an empty name",
-				File:    t.Path,
-			})
-			continue
-		}
-		if _, ok := seen[t.Name]; ok {
-			diags = append(diags, diag.Diagnostic{
-				Level:   diag.LevelError,
-				Code:    "TEAM_NAME_DUP",
-				Message: fmt.Sprintf("duplicate team name %q", t.Name),
-				File:    t.Path,
-			})
-		}
-		seen[t.Name] = struct{}{}
+	validators := []validators.Validator{
+		validators.NewTeamValidator(proj.Teams),
+		validators.NewFlowValidator(proj.Teams),
+		validators.NewChannelsValidator(proj.Teams),
+		validators.NewInhibitorsValidator(proj),
+		validators.NewSilenceWindowsValidator(proj),
 	}
 
-	// TODO (next steps):
-	// - Validate silence_windows names uniqueness (global vs team shadowing -> warn)
-	// - Validate channels: unique names within a team, required params per type
-	// - Validate flows: notify exists, references to channels & silence_windows resolve
-	// - Validate inhibitors: fields present, matcher syntax sanity
-	// - Time/duration parsing checks for wait/group/repeat
+	for _, v := range validators {
+		diags = append(diags, v.Validate()...)
+	}
 
 	return diags
 }

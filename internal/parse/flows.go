@@ -5,18 +5,14 @@ import (
 
 	"github.com/nyambati/fuse/internal/am"
 	"github.com/nyambati/fuse/internal/diag"
-	"github.com/nyambati/fuse/internal/types"
+	"github.com/nyambati/fuse/internal/dsl"
 )
 
 // BuildFlowRoutes converts all teams' flows into a flat slice of AM routes.
 // Caller typically wraps these under a single root route:
-//
-//	root := &am.Route{Routes: routes}
-func BuildFlowRoutes(proj types.Project) ([]am.Route, []diag.Diagnostic) {
-	var (
-		out   []am.Route
-		diags []diag.Diagnostic
-	)
+
+func BuildFlowRoutes(proj dsl.Project) (am.Route, []diag.Diagnostic) {
+	var diags []diag.Diagnostic
 
 	for _, team := range proj.Teams {
 		for idx, f := range team.Flows {
@@ -24,13 +20,14 @@ func BuildFlowRoutes(proj types.Project) ([]am.Route, []diag.Diagnostic) {
 			if len(d) > 0 {
 				diags = append(diags, d...)
 			}
-			out = append(out, rs...)
+			proj.RootRoute.Routes = append(proj.RootRoute.Routes, rs...)
 		}
 	}
-	return out, diags
+
+	return proj.RootRoute, diags
 }
 
-func mapFlowToRoutes(team types.Team, idx int, f types.Flow) ([]am.Route, []diag.Diagnostic) {
+func mapFlowToRoutes(team dsl.Team, idx int, f dsl.Flow) ([]am.Route, []diag.Diagnostic) {
 	var (
 		routes []am.Route
 		diags  []diag.Diagnostic

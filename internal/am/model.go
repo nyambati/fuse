@@ -3,7 +3,7 @@ package am
 type Config struct {
 	Global        map[string]any    `yaml:"global,omitempty"`
 	Receivers     []Receiver        `yaml:"receivers,omitempty"`
-	Route         *Route            `yaml:"route,omitempty"`
+	Route         Route             `yaml:"route,omitempty"`
 	InhibitRules  []InhibitRule     `yaml:"inhibit_rules,omitempty"`
 	TimeIntervals []TimeIntervalSet `yaml:"time_intervals,omitempty"`
 }
@@ -28,9 +28,9 @@ type Route struct {
 }
 
 type InhibitRule struct {
-	SourceMatchers []string `yaml:"source_matchers,omitempty"`
-	TargetMatchers []string `yaml:"target_matchers,omitempty"`
-	Equal          []string `yaml:"equal,omitempty"`
+	SourceMatchers map[string]string `yaml:"source_matchers,omitempty"`
+	TargetMatchers map[string]string `yaml:"target_matchers,omitempty"`
+	Equal          []string          `yaml:"equal,omitempty"`
 }
 
 type TimeIntervalSet struct {

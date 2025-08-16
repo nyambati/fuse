@@ -3,8 +3,8 @@ package parse
 import (
 	"github.com/nyambati/fuse/internal/am"
 	"github.com/nyambati/fuse/internal/diag"
+	"github.com/nyambati/fuse/internal/dsl"
 	"github.com/nyambati/fuse/internal/secrets"
-	"github.com/nyambati/fuse/internal/types"
 )
 
 // ToAlertmanager translates a loaded Fuse project into an Alertmanager config.
@@ -14,7 +14,7 @@ import (
 //  2. Build Routes from flows (attached under root route)
 //  3. Build TimeIntervals from silence_windows
 //  4. Inhibit rules are passed through as-is from DSL (v0.1 simple copy)
-func ToAlertmanager(proj types.Project, prov secrets.Provider) (am.Config, []diag.Diagnostic) {
+func ToAlertmanager(proj dsl.Project, prov secrets.Provider) (am.Config, []diag.Diagnostic) {
 	var (
 		cfg   am.Config
 		diags []diag.Diagnostic
@@ -29,14 +29,12 @@ func ToAlertmanager(proj types.Project, prov secrets.Provider) (am.Config, []dia
 	cfg.Receivers = recvs
 
 	// // Routes (flows)
-	// routes, fDiags := BuildFlowRoutes(proj)
-	// if len(fDiags) > 0 {
-	// 	diags = append(diags, fDiags...)
-	// }
+	rootRoute, fDiags := BuildFlowRoutes(proj)
+	if len(fDiags) > 0 {
+		diags = append(diags, fDiags...)
+	}
 
-	// proj.RootRoute.Routes = routes
-
-	cfg.Route = proj.RootRoute
+	cfg.Route = rootRoute
 
 	// TimeIntervals (silence windows)
 	intervals, tDiags := BuildTimeIntervals(proj)
@@ -47,11 +45,9 @@ func ToAlertmanager(proj types.Project, prov secrets.Provider) (am.Config, []dia
 
 	// InhibitRules — copy directly from DSL
 	for _, ir := range proj.Inhibitors {
-		sourceMatchers, _ := ToMatchers(ir.If)
-		targetMatchers, _ := ToMatchers(ir.Suppress)
 		cfg.InhibitRules = append(cfg.InhibitRules, am.InhibitRule{
-			SourceMatchers: sourceMatchers,
-			TargetMatchers: targetMatchers,
+			SourceMatchers: ir.If,
+			TargetMatchers: ir.Suppress,
 			Equal:          ir.When,
 		})
 	}
