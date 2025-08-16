@@ -49,17 +49,19 @@ func newValidateCmd() *cobra.Command {
 			}
 
 			// 4) Build AM model in-memory (translate DSL → AM)
-			amc, parseDiags := parse.ToAlertmanager(proj, prov)
+			amc, parseDiags := parse.ToAlertmanager(proj)
 
 			// 5) Semantic validation
 			valDiags := validate.Project(proj, amc, validate.Options{Strict: strict})
 
 			// 6) (Optional) amtool check-config
 			toolDiags := am.CheckWithAmtool(amc, amtoolPath) // returns empty if not configured/found
-
+			rdiags := parse.ResolveSecrets(&amc, prov)
 			// 7) Collate diagnostics and decide exit code
-			all := validate.Merge(loadDiags, parseDiags, valDiags, toolDiags)
+			all := validate.Merge(loadDiags, parseDiags, valDiags, toolDiags, rdiags)
 			exit := validate.ExitCode(all, strict)
+
+			utils.PrettyPrint(amc)
 
 			// 8) Output
 			if jsonOut {
