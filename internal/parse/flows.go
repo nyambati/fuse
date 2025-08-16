@@ -10,13 +10,9 @@ import (
 
 // BuildFlowRoutes converts all teams' flows into a flat slice of AM routes.
 // Caller typically wraps these under a single root route:
-//
-//	root := &am.Route{Routes: routes}
+
 func BuildFlowRoutes(proj dsl.Project) (am.Route, []diag.Diagnostic) {
-	var (
-		routes []am.Route
-		diags  []diag.Diagnostic
-	)
+	var diags []diag.Diagnostic
 
 	for _, team := range proj.Teams {
 		for idx, f := range team.Flows {
@@ -24,10 +20,10 @@ func BuildFlowRoutes(proj dsl.Project) (am.Route, []diag.Diagnostic) {
 			if len(d) > 0 {
 				diags = append(diags, d...)
 			}
-			routes = append(routes, rs...)
+			proj.RootRoute.Routes = append(proj.RootRoute.Routes, rs...)
 		}
 	}
-	proj.RootRoute.Routes = routes
+
 	return proj.RootRoute, diags
 }
 

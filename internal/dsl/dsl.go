@@ -124,16 +124,29 @@ func LoadProject(root string, teamFilter []string) (Project, []diag.Diagnostic) 
 	return p, diags
 }
 
-func loadGlobal(root string, p *Project) error {
-	// global/global.yaml
-	b, err := os.ReadFile(filepath.Join(root, "global", "global.yaml"))
+// unmarshalYamlFile is a helper to read and unmarshal a YAML file.
+// If optional is true, os.IsNotExist errors are ignored.
+func unmarshalYamlFile(filePath string, out interface{}, optional bool) error {
+	b, err := os.ReadFile(filePath)
 	if err != nil {
-		return fmt.Errorf("failed to read global/global.yaml: %w", err)
+		if os.IsNotExist(err) && optional {
+			return nil
+		}
+		return fmt.Errorf("failed to read %s: %w", filePath, err)
 	}
 
+	if err := yaml.Unmarshal(b, out); err != nil {
+		return fmt.Errorf("failed to parse %s: %w", filePath, err)
+	}
+
+	return nil
+}
+
+func loadGlobal(root string, p *Project) error {
+	// global/global.yaml
 	var raw map[string]any
-	if err := yaml.Unmarshal(b, &raw); err != nil {
-		return fmt.Errorf("failed to parse global/global.yaml: %w", err)
+	if err := unmarshalYamlFile(filepath.Join(root, "global", "global.yaml"), &raw, false); err != nil {
+		return err
 	}
 
 	if g, ok := raw["global"]; ok {
@@ -145,54 +158,30 @@ func loadGlobal(root string, p *Project) error {
 	}
 
 	// global/silence_windows.yaml
-	b, err = os.ReadFile(filepath.Join(root, "global", "silence_windows.yaml"))
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return fmt.Errorf("failed to read global/silence_windows.yaml: %w", err)
-	}
-
 	var swWrapped struct {
 		SilenceWindows []SilenceWindow `yaml:"silence_windows"`
 	}
-
-	if err := yaml.Unmarshal(b, &swWrapped); err != nil {
-		return fmt.Errorf("failed to parse global/silence_windows.yaml: %w", err)
+	if err := unmarshalYamlFile(filepath.Join(root, "global", "silence_windows.yaml"), &swWrapped, true); err != nil {
+		return err
 	}
-
 	p.SilenceWindows = append(p.SilenceWindows, swWrapped.SilenceWindows...)
 
 	// global/inhibitors.yaml (optional)
-	b, err = os.ReadFile(filepath.Join(root, "global", "inhibitors.yaml"))
-	if err != nil {
-		if os.IsNotExist(err) {
-			return nil
-		}
-		return fmt.Errorf("failed to read global/inhibitors.yaml: %w", err)
-	}
-
 	var ihWrapped struct {
 		Inhibitors []Inhibitor `yaml:"inhibitors"`
 	}
-	if err := yaml.Unmarshal(b, &ihWrapped); err != nil {
-		return fmt.Errorf("failed to parse global/inhibitors.yaml: %w", err)
+	if err := unmarshalYamlFile(filepath.Join(root, "global", "inhibitors.yaml"), &ihWrapped, true); err != nil {
+		return err
 	}
 	p.Inhibitors = append(p.Inhibitors, ihWrapped.Inhibitors...)
 
 	// global/root_route.yaml
-	b, err = os.ReadFile(filepath.Join(root, "global", "root_route.yaml"))
-	if err != nil && !os.IsNotExist(err) {
-		return fmt.Errorf("failed to read global/root_route.yaml: %w", err)
-	}
-
 	var routeWrapped struct {
 		Route am.Route `yaml:"route"`
 	}
-	if err := yaml.Unmarshal(b, &routeWrapped); err != nil {
-		return fmt.Errorf("failed to parse global/root_route.yaml: %w", err)
+	if err := unmarshalYamlFile(filepath.Join(root, "global", "root_route.yaml"), &routeWrapped, true); err != nil {
+		return err
 	}
-
 	p.RootRoute = routeWrapped.Route
 
 	return nil
@@ -200,50 +189,30 @@ func loadGlobal(root string, p *Project) error {
 
 func loadTeam(teamPath string, t *Team) error {
 	// channels.yaml
-	b, err := os.ReadFile(filepath.Join(teamPath, "channels.yaml"))
-	if err != nil {
-		return fmt.Errorf("failed to read %s: %w", filepath.Join(teamPath, "channels.yaml"), err)
-	}
 	var chWrapped struct {
 		Channels []Channel `yaml:"channels"`
 	}
-	if err := yaml.Unmarshal(b, &chWrapped); err != nil {
-		return fmt.Errorf("failed to parse %s: %w", filepath.Join(teamPath, "channels.yaml"), err)
+	if err := unmarshalYamlFile(filepath.Join(teamPath, "channels.yaml"), &chWrapped, false); err != nil {
+		return err
 	}
-
 	t.Channels = append(t.Channels, chWrapped.Channels...)
 
 	// flows.yaml
-	b, err = os.ReadFile(filepath.Join(teamPath, "flows.yaml"))
-	if err != nil {
-		return fmt.Errorf("failed to read %s: %w", filepath.Join(teamPath, "flows.yaml"), err)
-	}
-
 	var fWrapped struct {
 		Flows []Flow `yaml:"flows"`
 	}
-
-	if err := yaml.Unmarshal(b, &fWrapped); err != nil {
-		return fmt.Errorf("failed to parse %s: %w", filepath.Join(teamPath, "flows.yaml"), err)
+	if err := unmarshalYamlFile(filepath.Join(teamPath, "flows.yaml"), &fWrapped, false); err != nil {
+		return err
 	}
-
-	for _, fy := range fWrapped.Flows {
-		t.Flows = append(t.Flows, fy)
-	}
+	t.Flows = append(t.Flows, fWrapped.Flows...)
 
 	// silence_windows.yaml
-	b, err = os.ReadFile(filepath.Join(teamPath, "silence_windows.yaml"))
-	if err != nil {
-		return fmt.Errorf("failed to read %s: %w", filepath.Join(teamPath, "silence_windows.yaml"), err)
-	}
-
 	var swWrapped struct {
 		SilenceWindows []SilenceWindow `yaml:"silence_windows"`
 	}
-	if err := yaml.Unmarshal(b, &swWrapped); err != nil {
-		return fmt.Errorf("failed to parse %s: %w", filepath.Join(teamPath, "silence_windows.yaml"), err)
+	if err := unmarshalYamlFile(filepath.Join(teamPath, "silence_windows.yaml"), &swWrapped, false); err != nil {
+		return err
 	}
-
 	t.SilenceWindows = append(t.SilenceWindows, swWrapped.SilenceWindows...)
 
 	// // inhibitors.yaml (optional)
